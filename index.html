@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVC Architecture Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        .layer-box {
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .layer-box.active {
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: #3b82f6; /* Blue-500 */
+            background-color: #eff6ff; /* Blue-50 */
+        }
+        .layer-box.active .layer-icon {
+            color: #2563eb; /* Blue-600 */
+        }
+        
+        /* Flow Arrows */
+        .arrow-down, .arrow-up {
+            width: 2px;
+            height: 24px;
+            background-color: #cbd5e1;
+            margin: 0 auto;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        .arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: -4px;
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: #cbd5e1 transparent transparent transparent;
+            transition: border-color 0.3s ease;
+        }
+        .arrow-up::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -4px;
+            border-width: 0 5px 5px;
+            border-style: solid;
+            border-color: transparent transparent #cbd5e1 transparent;
+            transition: border-color 0.3s ease;
+        }
+        .arrow-down.active { background-color: #3b82f6; }
+        .arrow-down.active::after { border-color: #3b82f6 transparent transparent transparent; }
+        .arrow-up.active { background-color: #10b981; }
+        .arrow-up.active::after { border-color: transparent transparent #10b981 transparent; }
+
+        /* Payload monitor animation */
+        .payload-update {
+            animation: highlightPayload 0.5s ease-out;
+        }
+        @keyframes highlightPayload {
+            0% { background-color: #3b82f6; color: white; }
+            100% { background-color: transparent; color: #a7f3d0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- Left Panel: User Input (Main) & Output (View) & Theory -->
+        <div class="w-full md:w-1/3 bg-gray-50 border-r border-gray-200 p-6 flex flex-col h-[85vh] overflow-y-auto">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                Giao diện (Frontend Layer)
+            </h2>
+
+            <!-- Main Input Area -->
+            <div id="main-layer" class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-4 layer-box relative">
+                <span class="absolute -top-3 left-4 bg-gray-50 px-2 text-xs font-bold text-gray-500 uppercase">Main (Input)</span>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tên Sinh Viên</label>
+                <input type="text" id="studentName" placeholder="Nhập tên..." value="Nguyễn Văn A" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+                
+                <div id="error-message" class="text-red-500 text-xs hidden mb-2 font-medium">Vui lòng nhập tên sinh viên!</div>
+
+                <button id="startBtn" onclick="runSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Thêm Sinh Viên
+                </button>
+            </div>
+
+            <!-- View Output Area -->
+            <div id="view-layer" class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-6 layer-box relative">
+                 <span class="absolute -top-3 left-4 bg-gray-50 px-2 text-xs font-bold text-gray-500 uppercase">View (Output)</span>
+                 <p class="text-sm text-gray-500 mb-2 font-mono">Console Output:</p>
+                 <div id="console-output" class="bg-gray-900 text-green-400 font-mono text-sm p-3 rounded-lg min-h-[80px] flex items-center">
+                    > Đang chờ lệnh từ Controller...
+                 </div>
+            </div>
+
+            <!-- Educational Section: DTOs -->
+            <div class="mt-auto bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                <h3 class="text-sm font-bold text-indigo-800 mb-2">💡 Cẩm nang DTO (Data Transfer Object)</h3>
+                <ul class="text-xs text-indigo-900 space-y-2">
+                    <li><strong class="text-indigo-700">RequestDTO:</strong> Gói dữ liệu mang thông tin người dùng nhập từ <code class="bg-indigo-100 px-1 rounded">Main</code> chuyển cho <code class="bg-indigo-100 px-1 rounded">Controller</code>. Truyền xuyên suốt đến Service và Repository.</li>
+                    <li><strong class="text-indigo-700">ResponseDTO:</strong> Gói kết quả xử lý từ <code class="bg-indigo-100 px-1 rounded">Controller</code> trả về cho <code class="bg-indigo-100 px-1 rounded">View</code> để in ra màn hình.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Panel: Backend Architecture & Payload Monitor -->
+        <div class="w-full md:w-2/3 p-6 flex flex-col md:flex-row gap-6 bg-white h-[85vh] overflow-y-auto">
+            
+            <!-- Architecture Stack -->
+            <div class="flex-1 flex flex-col items-center relative z-10">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Hệ thống Lõi (Backend)</h2>
+                <p class="text-sm text-gray-500 mb-6">Luồng dữ liệu: Controller ↔ Service ↔ Repository ↔ Model</p>
+
+                <div class="w-full max-w-sm flex flex-col">
+                    
+                    <!-- Controller Layer -->
+                    <div id="controller-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
+                        <div class="bg-purple-100 p-2 rounded-full layer-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">Controller <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Nhạc trưởng</span></h3>
+                            <p id="controller-status" class="text-xs text-gray-500 mt-1">Chờ nhận RequestDTO...</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-6 py-1">
+                        <div id="arrow-c-s-down" class="arrow-down"></div>
+                        <div id="arrow-s-c-up" class="arrow-up"></div>
+                    </div>
+
+                    <!-- Service Layer -->
+                    <div id="service-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
+                        <div class="bg-yellow-100 p-2 rounded-full layer-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">Service <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Nghiệp vụ / Logic</span></h3>
+                            <p id="service-status" class="text-xs text-gray-500 mt-1">Đang rảnh rỗi...</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-6 py-1">
+                        <div id="arrow-s-r-down" class="arrow-down"></div>
+                        <div id="arrow-r-s-up" class="arrow-up"></div>
+                    </div>
+
+                    <!-- Repository Layer -->
+                    <div id="repo-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
+                        <div class="bg-green-100 p-2 rounded-full layer-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm">Repository <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Kho dữ liệu</span></h3>
+                            <p id="repo-status" class="text-xs text-gray-500 mt-1">Sẵn sàng lưu trữ (CRUD)...</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center py-1">
+                        <div id="arrow-r-m-down" class="arrow-down"></div>
+                    </div>
+
+                    <!-- Model Layer -->
+                    <div id="model-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
+                        <div class="bg-red-100 p-2 rounded-full layer-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <div class="w-full">
+                            <h3 class="font-bold text-gray-800 text-sm">Model (Entity) <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">List thực tế</span></h3>
+                            <div id="database-content" class="mt-2 bg-gray-50 border border-gray-200 rounded p-2 text-[11px] font-mono text-gray-600 h-16 overflow-y-auto">
+                                [ Database trống ]
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Payload Monitor Panel -->
+            <div class="w-full md:w-64 flex flex-col">
+                <div class="bg-gray-900 rounded-xl shadow-inner border border-gray-700 overflow-hidden flex-1 flex flex-col">
+                    <div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span class="text-xs font-bold text-white tracking-wider">LIVE PAYLOAD MONITOR</span>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col gap-4">
+                        
+                        <!-- DTO Status indicator -->
+                        <div>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-1">Gói Dữ Liệu Hiện Tại (Data Packet):</span>
+                            <div id="payload-display" class="font-mono text-xs text-green-300 bg-gray-800 p-2 rounded border border-gray-600 min-h-[60px] whitespace-pre-wrap break-all transition-colors duration-300">
+                                { Trống (Null) }
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="mt-auto bg-gray-800 p-3 rounded border border-gray-700">
+                            <p id="monitor-explanation" class="text-xs text-gray-400 italic">
+                                Hệ thống đang chờ người dùng nhập liệu để khởi tạo RequestDTO...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const db = []; // Simulating our Data List in Model
+
+        // Helper to introduce delays for animation
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        // Update Payload Display
+        function updatePayload(content, explanation) {
+            const display = document.getElementById('payload-display');
+            display.innerText = content;
+            display.classList.remove('payload-update');
+            void display.offsetWidth; // trigger reflow
+            display.classList.add('payload-update');
+
+            document.getElementById('monitor-explanation').innerText = explanation;
+        }
+
+        // Helper to reset UI
+        function resetUI() {
+            document.getElementById('error-message').classList.add('hidden');
+            document.querySelectorAll('.layer-box').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.arrow-down, .arrow-up').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('controller-status').innerText = "Chờ nhận RequestDTO...";
+            document.getElementById('service-status').innerText = "Đang rảnh rỗi...";
+            document.getElementById('repo-status').innerText = "Sẵn sàng lưu trữ (CRUD)...";
+            document.getElementById('console-output').innerText = "> Đang chờ lệnh từ Controller...";
+            document.getElementById('console-output').classList.replace('text-white', 'text-green-400');
+            updatePayload("{ Trống (Null) }", "Hệ thống đang chờ người dùng nhập liệu...");
+        }
+
+        // The Main Simulation Function
+        async function runSimulation() {
+            const btn = document.getElementById('startBtn');
+            const nameInput = document.getElementById('studentName').value;
+            
+            if(!nameInput.trim()) {
+                document.getElementById('error-message').classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            resetUI();
+
+            try {
+                // STEP 1: Main gets input & Creates RequestDTO
+                document.getElementById('main-layer').classList.add('active');
+                updatePayload(`StudentRequestDTO {\n  name: "${nameInput}"\n}`, "Tầng Main đóng gói dữ liệu nhập từ bàn phím thành RequestDTO.");
+                await delay(1200);
+                document.getElementById('main-layer').classList.remove('active');
+
+                // STEP 2: Main -> Controller
+                document.getElementById('controller-layer').classList.add('active');
+                document.getElementById('controller-status').innerHTML = `<span class="text-blue-600 font-semibold">Đã nhận RequestDTO từ Main</span>`;
+                updatePayload(`StudentRequestDTO {\n  name: "${nameInput}"\n}`, "Controller nhận RequestDTO. Sắp tới sẽ truyền nó cho Service.");
+                await delay(1200);
+
+                // STEP 3: Controller -> Service
+                document.getElementById('arrow-c-s-down').classList.add('active');
+                await delay(400);
+                document.getElementById('controller-layer').classList.remove('active');
+                document.getElementById('service-layer').classList.add('active');
+                document.getElementById('service-status').innerHTML = `<span class="text-yellow-600 font-semibold">Validate RequestDTO: Hợp lệ!</span>`;
+                updatePayload(`StudentRequestDTO {\n  name: "${nameInput}"\n}`, "Service nhận RequestDTO để kiểm tra logic (Tên không rỗng, v.v.).");
+                await delay(1200);
+
+                // STEP 4: Service -> Repository
+                document.getElementById('arrow-s-r-down').classList.add('active');
+                await delay(400);
+                document.getElementById('service-layer').classList.remove('active');
+                document.getElementById('repo-layer').classList.add('active');
+                document.getElementById('repo-status').innerHTML = `<span class="text-green-600 font-semibold">Nhận RequestDTO, chuẩn bị CREATE...</span>`;
+                await delay(1000);
+
+                // STEP 5: Repository -> Model (Mapping DTO to Entity)
+                document.getElementById('arrow-r-m-down').classList.add('active');
+                await delay(400);
+                document.getElementById('repo-layer').classList.remove('active');
+                document.getElementById('model-layer').classList.add('active');
+                
+                // Map to Model Entity and Update Database
+                const newId = db.length + 1;
+                const currentDate = new Date().toISOString().split('T')[0];
+                updatePayload(`StudentEntity {\n  id: ${newId},\n  name: "${nameInput}",\n  createdAt: "${currentDate}"\n}`, "Repository trích xuất dữ liệu từ RequestDTO và map (chuyển đổi) thành Model/Entity chuẩn để lưu vào Database.");
+                
+                db.push(`{ id: ${newId}, name: "${nameInput}" }`);
+                document.getElementById('database-content').innerText = db.join('\n');
+                
+                await delay(1500);
+                document.getElementById('model-layer').classList.remove('active');
+                document.getElementById('arrow-r-m-down').classList.remove('active');
+
+                // STEP 6: Flow Back Up - Repo returns boolean or entity -> Service -> Controller (Creates ResponseDTO)
+                document.getElementById('repo-layer').classList.add('active');
+                document.getElementById('repo-status').innerHTML = `<span class="text-green-600 font-semibold">Lưu thành công. Trả kết quả lên.</span>`;
+                updatePayload(`boolean result = true;\n// OR\nreturn StudentEntity;`, "Repository lưu xong, trả kết quả thành công ngược lại cho Service.");
+                await delay(1000);
+                document.getElementById('repo-layer').classList.remove('active');
+                document.getElementById('arrow-r-s-up').classList.add('active');
+
+                await delay(400);
+                document.getElementById('service-layer').classList.add('active');
+                document.getElementById('service-status').innerHTML = `<span class="text-yellow-600 font-semibold">Nghiệp vụ hoàn tất. Báo Controller.</span>`;
+                await delay(800);
+                document.getElementById('service-layer').classList.remove('active');
+                document.getElementById('arrow-s-c-up').classList.add('active');
+
+                await delay(400);
+                document.getElementById('controller-layer').classList.add('active');
+                document.getElementById('controller-status').innerHTML = `<span class="text-blue-600 font-semibold">Tạo ResponseDTO để gọi View</span>`;
+                
+                // Controller creates ResponseDTO
+                updatePayload(`StudentResponseDTO {\n  id: ${newId},\n  message: "Thành công!",\n  displayString: "[ID: ${newId}] ${nameInput}"\n}`, "Controller đóng gói kết quả vào ResponseDTO - đối tượng được thiết kế CHỈ ĐỂ HIỂN THỊ, giấu đi các trường nhạy cảm như createdAt.");
+                await delay(1800);
+                document.getElementById('controller-layer').classList.remove('active');
+
+                // STEP 7: Controller -> View
+                document.getElementById('view-layer').classList.add('active');
+                updatePayload(`Giao tiếp hoàn tất!`, "View chỉ nhận ResponseDTO từ Controller và in ra màn hình. View tuyệt đối không gọi thẳng Service hay Repo.");
+                
+                const consoleOut = document.getElementById('console-output');
+                consoleOut.classList.replace('text-green-400', 'text-white');
+                consoleOut.innerHTML = `> [GIAO DIỆN HỆ THỐNG]<br>> Thêm sinh viên thành công!<br>> Dữ liệu từ ResponseDTO: [ID: ${newId}] Tên: ${nameInput}`;
+                
+                await delay(1500);
+                document.getElementById('view-layer').classList.remove('active');
+
+            } finally {
+                // Cleanup arrows
+                document.querySelectorAll('.arrow-down, .arrow-up').forEach(el => el.classList.remove('active'));
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('studentName').value = ''; // Clear input for next run
+            }
+        }
+    </script>
+</body>
+</html>
