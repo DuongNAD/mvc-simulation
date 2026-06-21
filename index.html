@@ -67,19 +67,19 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="h-screen w-screen m-0 p-0 overflow-hidden bg-gray-50">
 
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden flex flex-col md:flex-row">
+    <div class="bg-white w-full h-full flex flex-col md:flex-row">
         
         <!-- Left Panel: User Input (Main) & Output (View) & Theory -->
-        <div class="w-full md:w-1/3 bg-gray-50 border-r border-gray-200 p-6 flex flex-col h-[85vh] overflow-y-auto">
+        <div class="w-full md:w-1/4 lg:w-[320px] shrink-0 bg-gray-50 border-r border-gray-200 p-6 flex flex-col h-full overflow-y-auto">
             <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 Giao diện (Frontend Layer)
             </h2>
 
             <!-- Main Input Area -->
-            <div id="main-layer" class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-4 layer-box relative">
+            <div id="main-layer" class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-4 layer-box relative transition-opacity duration-500">
                 <span class="absolute -top-3 left-4 bg-gray-50 px-2 text-xs font-bold text-gray-500 uppercase">Main (Input)</span>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tên Sinh Viên</label>
                 <input type="text" id="studentName" placeholder="Nhập tên..." value="Nguyễn Văn A" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
@@ -89,10 +89,20 @@
                 <button id="startBtn" onclick="runSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     Thêm Sinh Viên
                 </button>
+
+                <!-- Điều khiển mô phỏng thủ công -->
+                <div id="simulation-controls" class="hidden mt-4 flex gap-2 border-t border-gray-100 pt-3">
+                    <button id="prevBtn" onclick="prevStep()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+                        Trước
+                    </button>
+                    <button id="nextBtn" onclick="nextStep()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+                        Sau
+                    </button>
+                </div>
             </div>
 
             <!-- View Output Area -->
-            <div id="view-layer" class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-6 layer-box relative">
+            <div id="view-layer" class="bg-white p-4 rounded-xl border-2 border-gray-200 mb-6 layer-box relative transition-opacity duration-500">
                  <span class="absolute -top-3 left-4 bg-gray-50 px-2 text-xs font-bold text-gray-500 uppercase">View (Output)</span>
                  <p class="text-sm text-gray-500 mb-2 font-mono">Console Output:</p>
                  <div id="console-output" class="bg-gray-900 text-green-400 font-mono text-sm p-3 rounded-lg min-h-[80px] flex items-center">
@@ -110,116 +120,768 @@
             </div>
         </div>
 
-        <!-- Right Panel: Backend Architecture & Payload Monitor -->
-        <div class="w-full md:w-2/3 p-6 flex flex-col md:flex-row gap-6 bg-white h-[85vh] overflow-y-auto">
-            
-            <!-- Architecture Stack -->
-            <div class="flex-1 flex flex-col items-center relative z-10">
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Hệ thống Lõi (Backend)</h2>
-                <p class="text-sm text-gray-500 mb-6">Luồng dữ liệu: Controller ↔ Service ↔ Repository ↔ Model</p>
+        <!-- Right Panel: Backend Architecture, Payload Monitor, and Copy Tabs -->
+        <div class="flex-1 flex flex-col bg-white h-full border-l border-gray-200 overflow-hidden">
+            <!-- Tabs Navigation -->
+            <div class="flex border-b border-gray-200 bg-gray-50 flex-shrink-0">
+                <button id="tab-simulation-btn" onclick="switchTab('simulation')" class="flex-1 py-3 px-4 text-center font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+                    Mô phỏng Luồng
+                </button>
+                <button id="tab-source-btn" onclick="switchTab('source')" class="flex-1 py-3 px-4 text-center font-semibold text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    Mã Nguồn Java Sản Xuất
+                </button>
+            </div>
 
-                <div class="w-full max-w-sm flex flex-col">
+            <!-- Tabs Content Container -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- Simulation Tab Content -->
+                <div id="tab-simulation" class="flex flex-col lg:flex-row gap-6">
+                    <!-- Left: Architecture Stack + Current Step Code -->
+                    <div class="flex-1 flex flex-col relative z-10">
+                        <div class="flex flex-col items-center">
+                            <h2 class="text-xl font-bold text-gray-800 mb-2">Hệ thống Lõi (Backend)</h2>
+                            <p class="text-sm text-gray-500 mb-6 text-center">Luồng dữ liệu: Controller ↔ Service ↔ Repository ↔ Model</p>
+
+                            <div class="w-full max-w-sm flex flex-col">
+                                <!-- Controller Layer -->
+                                <div id="controller-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10 opacity-10 transition-opacity duration-500">
+                                    <div class="bg-purple-100 p-2 rounded-full layer-icon">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-sm">Controller <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Nhạc trưởng</span></h3>
+                                        <p id="controller-status" class="text-xs text-gray-500 mt-1">Chờ nhận RequestDTO...</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-center gap-6 py-1">
+                                    <div id="arrow-c-s-down" class="arrow-down opacity-10 transition-opacity duration-500"></div>
+                                    <div id="arrow-s-c-up" class="arrow-up opacity-10 transition-opacity duration-500"></div>
+                                </div>
+
+                                <!-- Service Layer -->
+                                <div id="service-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10 opacity-10 transition-opacity duration-500">
+                                    <div class="bg-yellow-100 p-2 rounded-full layer-icon">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-sm">Service <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Nghiệp vụ / Logic</span></h3>
+                                        <p id="service-status" class="text-xs text-gray-500 mt-1">Đang rảnh rỗi...</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-center gap-6 py-1">
+                                    <div id="arrow-s-r-down" class="arrow-down opacity-10 transition-opacity duration-500"></div>
+                                    <div id="arrow-r-s-up" class="arrow-up opacity-10 transition-opacity duration-500"></div>
+                                </div>
+
+                                <!-- Repository Layer -->
+                                <div id="repo-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10 opacity-10 transition-opacity duration-500">
+                                    <div class="bg-green-100 p-2 rounded-full layer-icon">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-sm">Repository <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Kho dữ liệu</span></h3>
+                                        <p id="repo-status" class="text-xs text-gray-500 mt-1">Sẵn sàng lưu trữ (CRUD)...</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-center py-1">
+                                    <div id="arrow-r-m-down" class="arrow-down opacity-10 transition-opacity duration-500"></div>
+                                </div>
+
+                                <!-- Model Layer -->
+                                <div id="model-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10 opacity-10 transition-opacity duration-500">
+                                    <div class="bg-red-100 p-2 rounded-full layer-icon">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    </div>
+                                    <div class="w-full">
+                                        <h3 class="font-bold text-gray-800 text-sm">Model (Entity) <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">List thực tế</span></h3>
+                                        <div id="database-content" class="mt-2 bg-gray-50 border border-gray-200 rounded p-2 text-[11px] font-mono text-gray-600 h-16 overflow-y-auto">
+                                            [ Database trống ]
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contextual Java Code Snippet below the Stack -->
+                        <div id="contextual-code-panel" class="mt-6 flex flex-col lg:flex-row gap-4 hidden">
+                            <!-- Left Column: Contextual Code Snippet -->
+                            <div class="flex-1 bg-gray-900 rounded-xl overflow-hidden border border-gray-700 flex flex-col">
+                                <div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between">
+                                    <span class="text-xs font-bold text-white tracking-wider">MÃ NGUỒN BƯỚC <span id="current-step-num">0</span>/7</span>
+                                    <span id="current-step-layer" class="text-xs text-blue-400 font-mono">TBD</span>
+                                </div>
+                                <pre class="p-3 text-[11px] text-gray-300 font-mono overflow-x-auto whitespace-pre bg-gray-950 min-h-[145px]"><code id="current-step-code">// Vui lòng nhập tên và chạy mô phỏng để xem mã nguồn thực thi...</code></pre>
+                            </div>
+
+                            <!-- Right Column: R6 Deep-Dive Explanation Panel -->
+                            <div id="r6-explanation-panel" class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col hidden">
+                                <div class="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                                    <span class="text-xs font-bold text-gray-700 tracking-wider">PHÂN TÍCH LỚP CHUYÊN SÂU</span>
+                                    <span id="r6-active-file" class="text-xs font-bold text-blue-600 font-mono">TBD.java</span>
+                                </div>
+                                <div class="p-4 text-xs space-y-3 flex-1 overflow-y-auto">
+                                    <div>
+                                        <span class="font-bold text-gray-800 block">1. Vai trò thực tế:</span>
+                                        <p id="r6-class-purpose" class="text-gray-600 mt-0.5 leading-relaxed"></p>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1 border-t border-gray-100">
+                                        <div>
+                                            <span class="font-bold text-indigo-700 block">2. Dữ liệu nhận (Input):</span>
+                                            <code id="r6-class-input" class="block bg-indigo-50 text-indigo-900 p-1.5 rounded mt-1 font-mono break-all whitespace-pre-wrap text-[10px] border border-indigo-100"></code>
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-green-700 block">3. Dữ liệu gửi đi (Output):</span>
+                                            <code id="r6-class-output" class="block bg-green-50 text-green-900 p-1.5 rounded mt-1 font-mono break-all whitespace-pre-wrap text-[10px] border border-green-100"></code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Payload Monitor -->
+                    <div class="w-full lg:w-64 flex flex-col flex-shrink-0">
+                        <div class="bg-gray-900 rounded-xl shadow-inner border border-gray-700 overflow-hidden flex-1 flex flex-col min-h-[300px]">
+                            <div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-2">
+                                <div id="live-indicator" class="w-2 h-2 rounded-full bg-gray-500"></div>
+                                <span class="text-xs font-bold text-white tracking-wider">LIVE PAYLOAD MONITOR</span>
+                            </div>
+                            <div class="p-4 flex-1 flex flex-col gap-4">
+                                <div>
+                                    <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-1">Gói Dữ Liệu Hiện Tại (Data Packet):</span>
+                                    <div id="payload-display" class="font-mono text-xs text-green-300 bg-gray-800 p-2 rounded border border-gray-600 min-h-[100px] whitespace-pre-wrap break-all transition-colors duration-300">
+                                        { Trống (Null) }
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-1">Tập Tin Tương Tác:</span>
+                                    <div id="file-tracking-display" class="font-mono text-xs text-blue-300 bg-gray-800 p-2 rounded border border-gray-600 min-h-[40px] whitespace-pre-wrap break-all transition-colors duration-300">
+                                        Chờ khởi tạo...
+                                    </div>
+                                </div>
+                                <div class="mt-auto bg-gray-800 p-3 rounded border border-gray-700">
+                                    <p id="monitor-explanation" class="text-xs text-gray-400 italic">
+                                        Hệ thống đang chờ người dùng nhập liệu để khởi tạo RequestDTO...
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Code Tab Content -->
+                <div id="tab-source" class="hidden flex flex-col">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 flex-shrink-0">
+                        <div>
+                            <label for="java-file-select" class="block text-sm font-medium text-gray-700 mb-1">Chọn lớp Java:</label>
+                            <select id="java-file-select" onchange="loadSourceFile(this.value)" class="block w-64 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+                                <option value="Main">Main.java (Chạy ứng dụng console)</option>
+                                <option value="StudentController">StudentController.java (Điều hướng)</option>
+                                <option value="StudentService">StudentService.java (Nghiệp vụ)</option>
+                                <option value="StudentRepository">StudentRepository.java (Lưu trữ)</option>
+                                <option value="Student">Student.java (Thực thể dữ liệu)</option>
+                                <option value="StudentRequestDTO">StudentRequestDTO.java (Nhận dữ liệu)</option>
+                                <option value="StudentResponseDTO">StudentResponseDTO.java (Trả dữ liệu)</option>
+                                <option value="StudentView">StudentView.java (Hiển thị kết quả)</option>
+                                <option value="Validation">Validation.java (Kiểm tra dữ liệu)</option>
+                            </select>
+                        </div>
+                        <button id="copy-btn" onclick="copySourceCode()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm shadow-md self-end md:self-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                            </svg>
+                            <span>Sao chép mã</span>
+                        </button>
+                    </div>
                     
-                    <!-- Controller Layer -->
-                    <div id="controller-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
-                        <div class="bg-purple-100 p-2 rounded-full layer-icon">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <div class="flex-grow bg-gray-900 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
+                        <div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between">
+                            <span id="java-file-name" class="text-xs font-mono font-bold text-gray-300">Main.java</span>
+                            <span class="text-xs text-gray-500 font-mono">production-style</span>
                         </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800 text-sm">Controller <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Nhạc trưởng</span></h3>
-                            <p id="controller-status" class="text-xs text-gray-500 mt-1">Chờ nhận RequestDTO...</p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center gap-6 py-1">
-                        <div id="arrow-c-s-down" class="arrow-down"></div>
-                        <div id="arrow-s-c-up" class="arrow-up"></div>
-                    </div>
-
-                    <!-- Service Layer -->
-                    <div id="service-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
-                        <div class="bg-yellow-100 p-2 rounded-full layer-icon">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800 text-sm">Service <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Nghiệp vụ / Logic</span></h3>
-                            <p id="service-status" class="text-xs text-gray-500 mt-1">Đang rảnh rỗi...</p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center gap-6 py-1">
-                        <div id="arrow-s-r-down" class="arrow-down"></div>
-                        <div id="arrow-r-s-up" class="arrow-up"></div>
-                    </div>
-
-                    <!-- Repository Layer -->
-                    <div id="repo-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
-                        <div class="bg-green-100 p-2 rounded-full layer-icon">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800 text-sm">Repository <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">Kho dữ liệu</span></h3>
-                            <p id="repo-status" class="text-xs text-gray-500 mt-1">Sẵn sàng lưu trữ (CRUD)...</p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center py-1">
-                        <div id="arrow-r-m-down" class="arrow-down"></div>
-                    </div>
-
-                    <!-- Model Layer -->
-                    <div id="model-layer" class="bg-white border-2 border-gray-200 rounded-xl p-3 flex items-center gap-3 layer-box z-10">
-                        <div class="bg-red-100 p-2 rounded-full layer-icon">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                        </div>
-                        <div class="w-full">
-                            <h3 class="font-bold text-gray-800 text-sm">Model (Entity) <span class="text-xs font-normal text-gray-500 bg-gray-100 px-1 rounded">List thực tế</span></h3>
-                            <div id="database-content" class="mt-2 bg-gray-50 border border-gray-200 rounded p-2 text-[11px] font-mono text-gray-600 h-16 overflow-y-auto">
-                                [ Database trống ]
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Payload Monitor Panel -->
-            <div class="w-full md:w-64 flex flex-col">
-                <div class="bg-gray-900 rounded-xl shadow-inner border border-gray-700 overflow-hidden flex-1 flex flex-col">
-                    <div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                        <span class="text-xs font-bold text-white tracking-wider">LIVE PAYLOAD MONITOR</span>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col gap-4">
-                        
-                        <!-- DTO Status indicator -->
-                        <div>
-                            <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold block mb-1">Gói Dữ Liệu Hiện Tại (Data Packet):</span>
-                            <div id="payload-display" class="font-mono text-xs text-green-300 bg-gray-800 p-2 rounded border border-gray-600 min-h-[60px] whitespace-pre-wrap break-all transition-colors duration-300">
-                                { Trống (Null) }
-                            </div>
-                        </div>
-
-                        <!-- Info Box -->
-                        <div class="mt-auto bg-gray-800 p-3 rounded border border-gray-700">
-                            <p id="monitor-explanation" class="text-xs text-gray-400 italic">
-                                Hệ thống đang chờ người dùng nhập liệu để khởi tạo RequestDTO...
-                            </p>
-                        </div>
+                        <pre class="flex-grow p-4 text-[11px] font-mono text-gray-300 overflow-y-auto whitespace-pre bg-gray-950 max-h-[50vh]"><code id="java-file-content"></code></pre>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        const db = []; // Simulating our Data List in Model
+        const db = []; // Giả lập danh sách dữ liệu trong Model
 
-        // Helper to introduce delays for animation
-        const delay = ms => new Promise(res => setTimeout(res, ms));
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
 
-        // Update Payload Display
+        // Đối tượng chứa các đoạn code snippet tương ứng với từng bước
+        const javaSnippets = {
+            1: {
+                file: "Main.java",
+                code: `// Main.java (Đọc dữ liệu và bắt đầu luồng)
+System.out.print("Nhập tên sinh viên: ");
+String name = scanner.nextLine();
+
+// Đóng gói dữ liệu vào RequestDTO
+StudentRequestDTO requestDTO = new StudentRequestDTO(name);
+
+// Gọi Controller xử lý
+controller.addStudent(requestDTO);`
+            },
+            2: {
+                file: "StudentController.java",
+                code: `// StudentController.java (Nhận RequestDTO và điều phối)
+public void addStudent(StudentRequestDTO requestDTO) {
+    try {
+        // Chuyển tiếp RequestDTO sang tầng Service để xử lý nghiệp vụ
+        StudentResponseDTO responseDTO = studentService.addStudent(requestDTO);
+        
+        // Gọi View hiển thị kết quả thành công từ ResponseDTO
+        studentView.displayMessage(responseDTO.getMessage());
+        studentView.displayStudentInfo(responseDTO);
+    } catch (Exception e) {
+        studentView.displayError(e.getMessage());
+    }
+}`
+            },
+            3: {
+                file: "StudentService.java",
+                code: `// StudentService.java (Kiểm tra nghiệp vụ / Logic)
+public StudentResponseDTO addStudent(StudentRequestDTO requestDTO) throws Exception {
+    String name = requestDTO.getName();
+    
+    // Thực hiện kiểm tra tính hợp lệ dữ liệu (Nghiệp vụ)
+    if (Validation.isBlank(name)) {
+        throw new Exception("Tên sinh viên không được để trống!");
+    }
+    
+    // Nếu hợp lệ, chuyển thông tin đến Repository để lưu trữ
+    Student student = studentRepository.addStudent(name);`
+            },
+            4: {
+                file: "StudentService.java",
+                code: `// StudentService.java -> StudentRepository.java (Chuẩn bị lưu)
+    // Gọi phương thức Repository để thêm mới sinh viên vào Database
+    Student student = studentRepository.addStudent(name);`
+            },
+            5: {
+                file: "StudentRepository.java",
+                code: `// StudentRepository.java (Tạo Model Entity và lưu vào DB)
+public Student addStudent(String name) {
+    String currentDate = LocalDate.now().toString();
+    
+    // Ánh xạ dữ liệu sang thực thể Model (Entity) với ID tự tăng
+    Student student = new Student(idCounter, name, currentDate);
+    
+    // Lưu trữ vào Database trong bộ nhớ (studentMap)
+    studentMap.put(idCounter, student);
+    idCounter++;
+    
+    return student;
+}`
+            },
+            6: {
+                file: "StudentService.java",
+                code: `// StudentService.java (Tạo ResponseDTO từ Entity)
+    // Sau khi lưu thành công, Service ánh xạ Entity sang ResponseDTO
+    // ResponseDTO bảo vệ thông tin nhạy cảm và đóng gói thông tin hiển thị
+    return new StudentResponseDTO(
+        student.getId(),
+        "Thêm sinh viên thành công!",
+        "[ID: " + student.getId() + "] " + student.getName()
+    );`
+            },
+            7: {
+                file: "StudentView.java",
+                code: `// StudentView.java (Hiển thị kết quả ra Console)
+public void displayStudentInfo(StudentResponseDTO responseDTO) {
+    // Chỉ hiển thị dữ liệu nhận được từ ResponseDTO
+    System.out.println("> Dữ liệu từ ResponseDTO: " + responseDTO.getDisplayString());
+}`
+            }
+        };
+
+        // Đối tượng chứa nội dung các file Java đầy đủ cho tab copy
+        const fullSourceCode = {
+            Main: `package main;
+
+import controller.StudentController;
+import repository.StudentRepository;
+import service.StudentService;
+import view.StudentView;
+import dto.StudentRequestDTO;
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        // Khởi tạo các thành phần theo mô hình Dependency Injection thủ công
+        StudentRepository repository = new StudentRepository();
+        StudentService service = new StudentService(repository);
+        StudentView view = new StudentView();
+        StudentController controller = new StudentController(service, view);
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("===== QUẢN LÝ SINH VIÊN =====");
+            System.out.println("1. Thêm Sinh Viên");
+            System.out.println("2. Xóa Sinh Viên");
+            System.out.println("3. Tìm Kiếm Sinh Viên");
+            System.out.println("4. Thoát");
+            System.out.print("Chọn chức năng: ");
+            
+            String choice = scanner.nextLine();
+            switch (choice) {
+                case "1":
+                    System.out.print("Nhập tên sinh viên: ");
+                    String name = scanner.nextLine();
+                    controller.addStudent(new StudentRequestDTO(name));
+                    break;
+                case "2":
+                    System.out.print("Nhập ID sinh viên cần xóa: ");
+                    try {
+                        int id = Integer.parseInt(scanner.nextLine());
+                        controller.deleteStudent(id);
+                    } catch (NumberFormatException e) {
+                        System.out.println("> ID phải là số nguyên!");
+                    }
+                    break;
+                case "3":
+                    System.out.print("Nhập từ khóa tìm kiếm: ");
+                    String query = scanner.nextLine();
+                    controller.searchStudent(query);
+                    break;
+                case "4":
+                    System.out.println("Tạm biệt!");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Lựa chọn không hợp lệ!");
+            }
+            System.out.println();
+        }
+    }
+}`,
+            StudentController: `package controller;
+
+import dto.StudentRequestDTO;
+import dto.StudentResponseDTO;
+import service.StudentService;
+import view.StudentView;
+import java.util.Map;
+
+public class StudentController {
+    private final StudentService studentService;
+    private final StudentView studentView;
+
+    public StudentController(StudentService studentService, StudentView studentView) {
+        this.studentService = studentService;
+        this.studentView = studentView;
+    }
+
+    /**
+     * Chức năng thêm sinh viên
+     * @param requestDTO dữ liệu yêu cầu thêm mới
+     */
+    public void addStudent(StudentRequestDTO requestDTO) {
+        try {
+            // Controller chuyển tiếp dữ liệu đến Service xử lý nghiệp vụ
+            StudentResponseDTO responseDTO = studentService.addStudent(requestDTO);
+            // Gọi View để hiển thị thông báo thành công
+            studentView.displayMessage(responseDTO.getMessage());
+            studentView.displayStudentInfo(responseDTO);
+        } catch (Exception e) {
+            // Gọi View hiển thị thông báo lỗi nếu có Exception xảy ra
+            studentView.displayError(e.getMessage());
+        }
+    }
+
+    /**
+     * Chức năng xóa sinh viên
+     * @param id ID của sinh viên cần xóa
+     */
+    public void deleteStudent(int id) {
+        try {
+            StudentResponseDTO responseDTO = studentService.deleteStudent(id);
+            studentView.displayMessage(responseDTO.getMessage());
+        } catch (Exception e) {
+            studentView.displayError(e.getMessage());
+        }
+    }
+
+    /**
+     * Chức năng tìm kiếm sinh viên
+     * @param query từ khóa tìm kiếm
+     */
+    public void searchStudent(String query) {
+        try {
+            Map<Integer, StudentResponseDTO> results = studentService.searchStudents(query);
+            studentView.displaySearchResults(results);
+        } catch (Exception e) {
+            studentView.displayError(e.getMessage());
+        }
+    }
+}`,
+            StudentService: `package service;
+
+import dto.StudentRequestDTO;
+import dto.StudentResponseDTO;
+import model.Student;
+import repository.StudentRepository;
+import utils.Validation;
+import java.util.Map;
+import java.util.HashMap;
+
+public class StudentService {
+    private final StudentRepository studentRepository;
+
+    public StudentService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
+    }
+
+    /**
+     * Kiểm tra logic nghiệp vụ và thêm sinh viên
+     */
+    public StudentResponseDTO addStudent(StudentRequestDTO requestDTO) throws Exception {
+        String name = requestDTO.getName();
+        
+        // Kiểm tra nghiệp vụ (Validation thực hiện ở Service)
+        if (Validation.isBlank(name)) {
+            throw new Exception("Tên sinh viên không được để trống!");
+        }
+        
+        // Chuyển tiếp tới Repository để ghi dữ liệu vào database
+        Student student = studentRepository.addStudent(name);
+        
+        // Ánh xạ (Map) thực thể Student sang StudentResponseDTO gửi về Controller
+        return new StudentResponseDTO(
+            student.getId(),
+            "Thêm sinh viên thành công!",
+            "[ID: " + student.getId() + "] " + student.getName()
+        );
+    }
+
+    /**
+     * Xóa sinh viên theo ID
+     */
+    public StudentResponseDTO deleteStudent(int id) throws Exception {
+        if (!studentRepository.exists(id)) {
+            throw new Exception("Sinh viên với ID " + id + " không tồn tại!");
+        }
+        Student student = studentRepository.deleteStudent(id);
+        return new StudentResponseDTO(
+            id,
+            "Xóa sinh viên thành công!",
+            "[ID: " + id + "] " + student.getName()
+        );
+    }
+
+    /**
+     * Tìm kiếm danh sách sinh viên
+     */
+    public Map<Integer, StudentResponseDTO> searchStudents(String query) throws Exception {
+        if (studentRepository.isEmpty()) {
+            throw new Exception("Cơ sở dữ liệu sinh viên đang trống!");
+        }
+        Map<Integer, Student> students = studentRepository.searchStudents(query);
+        if (students.isEmpty()) {
+            throw new Exception("Không tìm thấy sinh viên nào khớp với từ khóa!");
+        }
+        
+        Map<Integer, StudentResponseDTO> responseMap = new HashMap<>();
+        for (Map.Entry<Integer, Student> entry : students.entrySet()) {
+            Student s = entry.getValue();
+            responseMap.put(entry.getKey(), new StudentResponseDTO(
+                s.getId(),
+                "Tìm thấy",
+                "[ID: " + s.getId() + "] " + s.getName()
+            ));
+        }
+        return responseMap;
+    }
+}`,
+            StudentRepository: `package repository;
+
+import model.Student;
+import java.util.HashMap;
+import java.util.Map;
+import java.time.LocalDate;
+
+public class StudentRepository {
+    // Giả lập Database trong bộ nhớ
+    private final Map<Integer, Student> studentMap = new HashMap<>();
+    private int idCounter = 1;
+
+    /**
+     * Thêm sinh viên vào Map (Database giả lập)
+     */
+    public Student addStudent(String name) {
+        String currentDate = LocalDate.now().toString();
+        // Ánh xạ sang Entity và gán giá trị tự động
+        Student student = new Student(idCounter, name, currentDate);
+        studentMap.put(idCounter, student);
+        idCounter++;
+        return student;
+    }
+
+    /**
+     * Xóa sinh viên khỏi Database
+     */
+    public Student deleteStudent(int id) {
+        return studentMap.remove(id);
+    }
+
+    /**
+     * Tìm kiếm sinh viên theo tên
+     */
+    public Map<Integer, Student> searchStudents(String nameQuery) {
+        Map<Integer, Student> result = new HashMap<>();
+        for (Map.Entry<Integer, Student> entry : studentMap.entrySet()) {
+            if (entry.getValue().getName().toLowerCase().contains(nameQuery.toLowerCase())) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Kiểm tra sự tồn tại của ID sinh viên
+     */
+    public boolean exists(int id) {
+        return studentMap.containsKey(id);
+    }
+
+    /**
+     * Kiểm tra database trống
+     */
+    public boolean isEmpty() {
+        return studentMap.isEmpty();
+    }
+}`,
+            Student: `package model;
+
+/**
+ * Thực thể biểu diễn dữ liệu trong Database (Student Entity)
+ */
+public class Student {
+    private int id;
+    private String name;
+    private String createdAt;
+
+    public Student() {}
+
+    public Student(int id, String name, String createdAt) {
+        this.id = id;
+        this.name = name;
+        this.createdAt = createdAt;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+}`,
+            StudentRequestDTO: `package dto;
+
+/**
+ * Đối tượng vận chuyển dữ liệu yêu cầu từ Client/Main vào hệ thống
+ */
+public class StudentRequestDTO {
+    private String name;
+
+    public StudentRequestDTO() {}
+
+    public StudentRequestDTO(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}`,
+            StudentResponseDTO: `package dto;
+
+/**
+ * Đối tượng vận chuyển dữ liệu trả ra cho View hiển thị
+ */
+public class StudentResponseDTO {
+    private int id;
+    private String message;
+    private String displayString;
+
+    public StudentResponseDTO() {}
+
+    public StudentResponseDTO(int id, String message, String displayString) {
+        this.id = id;
+        this.message = message;
+        this.displayString = displayString;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getDisplayString() {
+        return displayString;
+    }
+
+    public void setDisplayString(String displayString) {
+        this.displayString = displayString;
+    }
+}`,
+            StudentView: `package view;
+
+import dto.StudentResponseDTO;
+import java.util.Map;
+
+public class StudentView {
+    /**
+     * Hiển thị thông báo chung hệ thống
+     */
+    public void displayMessage(String message) {
+        System.out.println("> [GIAO DIỆN HỆ THỐNG]");
+        System.out.println("> " + message);
+    }
+
+    /**
+     * Hiển thị thông tin sinh viên từ ResponseDTO
+     */
+    public void displayStudentInfo(StudentResponseDTO responseDTO) {
+        System.out.println("> Dữ liệu từ ResponseDTO: " + responseDTO.getDisplayString());
+    }
+
+    /**
+     * Hiển thị lỗi hệ thống
+     */
+    public void displayError(String errorMessage) {
+        System.err.println("> [LỖI HỆ THỐNG]: " + errorMessage);
+    }
+
+    /**
+     * Hiển thị kết quả tìm kiếm danh sách
+     */
+    public void displaySearchResults(Map<Integer, StudentResponseDTO> results) {
+        System.out.println("> [KẾT QUẢ TÌM KIẾM]");
+        for (StudentResponseDTO response : results.values()) {
+            System.out.println("> " + response.getDisplayString());
+        }
+    }
+}`,
+            Validation: `package utils;
+
+public class Validation {
+    /**
+     * Kiểm tra chuỗi rỗng hoặc chỉ chứa khoảng trắng
+     */
+    public static boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+}`
+        };
+
+        let currentStep = 0;
+        let nameInputVal = '';
+        let tempStudent = null; // Theo dõi sinh viên chưa lưu chính thức ở bước 5
+
+        // Chuyển đổi tab
+        function switchTab(tabName) {
+            const simTab = document.getElementById('tab-simulation');
+            const srcTab = document.getElementById('tab-source');
+            const simBtn = document.getElementById('tab-simulation-btn');
+            const srcBtn = document.getElementById('tab-source-btn');
+            
+            if (tabName === 'simulation') {
+                simTab.classList.remove('hidden');
+                srcTab.classList.add('hidden');
+                
+                simBtn.className = "flex-1 py-3 px-4 text-center font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none transition-all flex items-center justify-center gap-2";
+                srcBtn.className = "flex-1 py-3 px-4 text-center font-semibold text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-all flex items-center justify-center gap-2";
+            } else {
+                simTab.classList.add('hidden');
+                srcTab.classList.remove('hidden');
+                
+                simBtn.className = "flex-1 py-3 px-4 text-center font-semibold text-sm border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-all flex items-center justify-center gap-2";
+                srcBtn.className = "flex-1 py-3 px-4 text-center font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none transition-all flex items-center justify-center gap-2";
+                
+                // Tải mặc định file Main khi mở tab mã nguồn
+                loadSourceFile(document.getElementById('java-file-select').value);
+            }
+        }
+
+        // Tải file Java tương ứng trong tab mã nguồn
+        function loadSourceFile(fileName) {
+            const content = fullSourceCode[fileName];
+            document.getElementById('java-file-name').innerText = fileName + ".java";
+            document.getElementById('java-file-content').innerText = content;
+        }
+
+        // Sao chép mã nguồn vào Clipboard
+        function copySourceCode() {
+            const code = document.getElementById('java-file-content').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copy-btn');
+                const origText = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-green-400">Đã sao chép!</span>
+                `;
+                setTimeout(() => {
+                    btn.innerHTML = origText;
+                }, 2000);
+            }).catch(err => {
+                console.error("Lỗi khi sao chép: ", err);
+            });
+        }
+
+        // Cập nhật Live Payload Monitor
         function updatePayload(content, explanation) {
             const display = document.getElementById('payload-display');
             display.innerText = content;
@@ -230,7 +892,105 @@
             document.getElementById('monitor-explanation').innerText = explanation;
         }
 
-        // Helper to reset UI
+        function setOpacity(id, isVisible) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (isVisible) {
+                el.classList.remove('opacity-10');
+                el.classList.add('opacity-100');
+            } else {
+                el.classList.remove('opacity-100');
+                el.classList.add('opacity-10');
+            }
+        }
+
+        function applyBaselineOpacity() {
+            setOpacity('main-layer', true);
+            setOpacity('view-layer', true);
+            setOpacity('controller-layer', false);
+            setOpacity('service-layer', false);
+            setOpacity('repo-layer', false);
+            setOpacity('model-layer', false);
+            setOpacity('arrow-c-s-down', false);
+            setOpacity('arrow-s-c-up', false);
+            setOpacity('arrow-s-r-down', false);
+            setOpacity('arrow-r-s-up', false);
+            setOpacity('arrow-r-m-down', false);
+        }
+
+        // Dictionary for R6 explanations
+        const r6Explanations = {
+            1: {
+                file: "Main.java",
+                purpose: "Main.java là điểm đầu vào (Entry Point) của ứng dụng. Nó khởi chạy hệ thống, hiển thị menu dòng lệnh, tiếp nhận thông tin từ người dùng và đóng gói dữ liệu thô thành đối tượng DTO trước khi gọi Controller.",
+                input: 'Tên sinh viên nhập thô: "Nguyễn Văn A"',
+                output: 'StudentRequestDTO {\n  name: "Nguyễn Văn A"\n}'
+            },
+            2: {
+                file: "StudentController.java",
+                purpose: "Controller tiếp nhận yêu cầu từ client, giải nén DTO và điều phối luồng xử lý bằng cách gọi Service. Nó giữ vai trò cách ly giao diện người dùng khỏi tầng logic nghiệp vụ.",
+                input: 'StudentRequestDTO {\n  name: "Nguyễn Văn A"\n}',
+                output: 'StudentRequestDTO {\n  name: "Nguyễn Văn A"\n}'
+            },
+            3: {
+                file: "StudentService.java",
+                purpose: "Service xử lý toàn bộ logic nghiệp vụ (kiểm tra tính hợp lệ, định dạng, các quy tắc doanh nghiệp). Tránh đưa các logic này vào Controller hay Repository để tối ưu khả năng tái sử dụng.",
+                input: 'StudentRequestDTO {\n  name: "Nguyễn Văn A"\n}',
+                output: 'StudentRequestDTO {\n  name: "Nguyễn Văn A"\n}'
+            },
+            4: {
+                file: "StudentRepository.java",
+                purpose: "Repository chịu trách nhiệm lưu trữ và truy vấn dữ liệu từ nguồn lưu trữ (Memory, DB, File). Che giấu hoàn toàn phương thức lưu trữ để Service không phải phụ thuộc vào SQL.",
+                input: 'StudentRequestDTO {\n  name: "Nguyễn Văn A"\n}',
+                output: 'Student {\n  id: 1,\n  name: "Nguyễn Văn A",\n  createdAt: "2026-06-21"\n}'
+            },
+            5: {
+                file: "Student.java",
+                purpose: "Model (Entity) định nghĩa cấu trúc của đối tượng dữ liệu thực tế lưu trữ trong Database. Nó ánh xạ các thuộc tính dữ liệu thành các trường lưu trữ vật lý.",
+                input: 'Student {\n  id: 1,\n  name: "Nguyễn Văn A",\n  createdAt: "2026-06-21"\n}',
+                output: 'Student {\n  id: 1,\n  name: "Nguyễn Văn A",\n  createdAt: "2026-06-21"\n} (Đã lưu vào DB)'
+            },
+            6: {
+                file: "StudentResponseDTO.java",
+                purpose: "ResponseDTO đóng gói dữ liệu phản hồi trả về cho giao diện hiển thị. Lọc bỏ các trường dữ liệu nhạy cảm hoặc không cần thiết của Entity (như mật khẩu, log nội bộ) để bảo mật.",
+                input: 'Student {\n  id: 1,\n  name: "Nguyễn Văn A",\n  createdAt: "2026-06-21"\n}',
+                output: 'StudentResponseDTO {\n  id: 1,\n  message: "Thành công!",\n  displayString: "[ID: 1] Nguyễn Văn A"\n}'
+            },
+            7: {
+                file: "StudentView.java",
+                purpose: "View là giao diện cuối hiển thị kết quả cho người dùng. Nó thụ động nhận ResponseDTO từ Controller và in kết quả ra màn hình console (được escape ký tự để bảo mật).",
+                input: 'StudentResponseDTO {\n  id: 1,\n  message: "Thành công!",\n  displayString: "[ID: 1] Nguyễn Văn A"\n}',
+                output: 'Dòng chữ in ra Console: \n"> Thêm sinh viên thành công! Dữ liệu: [ID: 1] Tên: Nguyễn Văn A"'
+            }
+        };
+
+        // JavaScript helper to update R6 panel
+        function updateR6Panel(stepIndex, nameValue) {
+            const data = r6Explanations[stepIndex];
+            if (!data) return;
+            
+            const currentDbId = (stepIndex <= 5 && !tempStudent) ? (db.length + 1) : db.length;
+            const currentDate = new Date().toISOString().split('T')[0];
+            
+            let dynamicInput = data.input
+                .replace(/Nguyễn Văn A/g, () => nameValue)
+                .replace(/id: 1/g, () => `id: ${currentDbId}`)
+                .replace(/\[ID: 1\]/g, () => `[ID: ${currentDbId}]`)
+                .replace(/2026-06-21/g, () => currentDate);
+                
+            let dynamicOutput = data.output
+                .replace(/Nguyễn Văn A/g, () => nameValue)
+                .replace(/id: 1/g, () => `id: ${currentDbId}`)
+                .replace(/\[ID: 1\]/g, () => `[ID: ${currentDbId}]`)
+                .replace(/2026-06-21/g, () => currentDate);
+                
+            document.getElementById('r6-active-file').innerText = data.file;
+            document.getElementById('r6-class-purpose').innerText = data.purpose;
+            document.getElementById('r6-class-input').innerText = dynamicInput;
+            document.getElementById('r6-class-output').innerText = dynamicOutput;
+        }
+
+        // Reset toàn bộ UI về trạng thái ban đầu
         function resetUI() {
             document.getElementById('error-message').classList.add('hidden');
             document.querySelectorAll('.layer-box').forEach(el => el.classList.remove('active'));
@@ -242,112 +1002,245 @@
             document.getElementById('console-output').innerText = "> Đang chờ lệnh từ Controller...";
             document.getElementById('console-output').classList.replace('text-white', 'text-green-400');
             updatePayload("{ Trống (Null) }", "Hệ thống đang chờ người dùng nhập liệu...");
+
+            const fileTrack = document.getElementById('file-tracking-display');
+            if (fileTrack) {
+                fileTrack.innerText = "Chờ khởi tạo...";
+            }
+            
+            // Xóa nội dung R6
+            const activeFile = document.getElementById('r6-active-file');
+            if (activeFile) activeFile.innerText = '';
+            const classPurpose = document.getElementById('r6-class-purpose');
+            if (classPurpose) classPurpose.innerText = '';
+            const classInput = document.getElementById('r6-class-input');
+            if (classInput) classInput.innerText = '';
+            const classOutput = document.getElementById('r6-class-output');
+            if (classOutput) classOutput.innerText = '';
+            
+            applyBaselineOpacity();
         }
 
-        // The Main Simulation Function
-        async function runSimulation() {
-            const btn = document.getElementById('startBtn');
-            const nameInput = document.getElementById('studentName').value;
+        // Reset UI cho từng bước mô phỏng
+        function resetUIForStep() {
+            document.querySelectorAll('.layer-box').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.arrow-down, .arrow-up').forEach(el => el.classList.remove('active'));
             
-            if(!nameInput.trim()) {
+            document.getElementById('controller-status').innerText = "Chờ nhận RequestDTO...";
+            document.getElementById('service-status').innerText = "Đang rảnh rỗi...";
+            document.getElementById('repo-status').innerText = "Sẵn sàng lưu trữ (CRUD)...";
+            
+            document.getElementById('console-output').innerText = "> Đang chờ lệnh từ Controller...";
+            document.getElementById('console-output').classList.replace('text-white', 'text-green-400');
+        }
+
+        // Khởi động mô phỏng luồng thủ công khi click "Thêm Sinh Viên"
+        function runSimulation() {
+            const nameInput = document.getElementById('studentName');
+            nameInputVal = nameInput.value.trim();
+            
+            if (!nameInputVal) {
                 document.getElementById('error-message').classList.remove('hidden');
                 return;
             }
+            document.getElementById('error-message').classList.add('hidden');
+            
+            // Khóa input và nút bắt đầu
+            nameInput.disabled = true;
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            // Hiển thị bảng điều khiển và bảng code bước hiện tại
+            document.getElementById('simulation-controls').classList.remove('hidden');
+            document.getElementById('contextual-code-panel').classList.remove('hidden');
+            document.getElementById('r6-explanation-panel').classList.remove('hidden');
+            
+            // Bật live indicator
+            const indicator = document.getElementById('live-indicator');
+            indicator.classList.remove('bg-gray-500');
+            indicator.classList.add('bg-green-500', 'animate-pulse');
+            
+            // Chuyển sang Tab Mô Phỏng nếu đang ở Tab Source Code
+            switchTab('simulation');
 
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            resetUI();
+            // Bắt đầu bước 1
+            showStep(1);
+        }
 
-            try {
-                // STEP 1: Main gets input & Creates RequestDTO
-                document.getElementById('main-layer').classList.add('active');
-                updatePayload(`StudentRequestDTO {\n  name: "${nameInput}"\n}`, "Tầng Main đóng gói dữ liệu nhập từ bàn phím thành RequestDTO.");
-                await delay(1200);
-                document.getElementById('main-layer').classList.remove('active');
-
-                // STEP 2: Main -> Controller
-                document.getElementById('controller-layer').classList.add('active');
-                document.getElementById('controller-status').innerHTML = `<span class="text-blue-600 font-semibold">Đã nhận RequestDTO từ Main</span>`;
-                updatePayload(`StudentRequestDTO {\n  name: "${nameInput}"\n}`, "Controller nhận RequestDTO. Sắp tới sẽ truyền nó cho Service.");
-                await delay(1200);
-
-                // STEP 3: Controller -> Service
-                document.getElementById('arrow-c-s-down').classList.add('active');
-                await delay(400);
-                document.getElementById('controller-layer').classList.remove('active');
-                document.getElementById('service-layer').classList.add('active');
-                document.getElementById('service-status').innerHTML = `<span class="text-yellow-600 font-semibold">Validate RequestDTO: Hợp lệ!</span>`;
-                updatePayload(`StudentRequestDTO {\n  name: "${nameInput}"\n}`, "Service nhận RequestDTO để kiểm tra logic (Tên không rỗng, v.v.).");
-                await delay(1200);
-
-                // STEP 4: Service -> Repository
-                document.getElementById('arrow-s-r-down').classList.add('active');
-                await delay(400);
-                document.getElementById('service-layer').classList.remove('active');
-                document.getElementById('repo-layer').classList.add('active');
-                document.getElementById('repo-status').innerHTML = `<span class="text-green-600 font-semibold">Nhận RequestDTO, chuẩn bị CREATE...</span>`;
-                await delay(1000);
-
-                // STEP 5: Repository -> Model (Mapping DTO to Entity)
-                document.getElementById('arrow-r-m-down').classList.add('active');
-                await delay(400);
-                document.getElementById('repo-layer').classList.remove('active');
-                document.getElementById('model-layer').classList.add('active');
-                
-                // Map to Model Entity and Update Database
-                const newId = db.length + 1;
-                const currentDate = new Date().toISOString().split('T')[0];
-                updatePayload(`StudentEntity {\n  id: ${newId},\n  name: "${nameInput}",\n  createdAt: "${currentDate}"\n}`, "Repository trích xuất dữ liệu từ RequestDTO và map (chuyển đổi) thành Model/Entity chuẩn để lưu vào Database.");
-                
-                db.push(`{ id: ${newId}, name: "${nameInput}" }`);
-                document.getElementById('database-content').innerText = db.join('\n');
-                
-                await delay(1500);
-                document.getElementById('model-layer').classList.remove('active');
-                document.getElementById('arrow-r-m-down').classList.remove('active');
-
-                // STEP 6: Flow Back Up - Repo returns boolean or entity -> Service -> Controller (Creates ResponseDTO)
-                document.getElementById('repo-layer').classList.add('active');
-                document.getElementById('repo-status').innerHTML = `<span class="text-green-600 font-semibold">Lưu thành công. Trả kết quả lên.</span>`;
-                updatePayload(`boolean result = true;\n// OR\nreturn StudentEntity;`, "Repository lưu xong, trả kết quả thành công ngược lại cho Service.");
-                await delay(1000);
-                document.getElementById('repo-layer').classList.remove('active');
-                document.getElementById('arrow-r-s-up').classList.add('active');
-
-                await delay(400);
-                document.getElementById('service-layer').classList.add('active');
-                document.getElementById('service-status').innerHTML = `<span class="text-yellow-600 font-semibold">Nghiệp vụ hoàn tất. Báo Controller.</span>`;
-                await delay(800);
-                document.getElementById('service-layer').classList.remove('active');
-                document.getElementById('arrow-s-c-up').classList.add('active');
-
-                await delay(400);
-                document.getElementById('controller-layer').classList.add('active');
-                document.getElementById('controller-status').innerHTML = `<span class="text-blue-600 font-semibold">Tạo ResponseDTO để gọi View</span>`;
-                
-                // Controller creates ResponseDTO
-                updatePayload(`StudentResponseDTO {\n  id: ${newId},\n  message: "Thành công!",\n  displayString: "[ID: ${newId}] ${nameInput}"\n}`, "Controller đóng gói kết quả vào ResponseDTO - đối tượng được thiết kế CHỈ ĐỂ HIỂN THỊ, giấu đi các trường nhạy cảm như createdAt.");
-                await delay(1800);
-                document.getElementById('controller-layer').classList.remove('active');
-
-                // STEP 7: Controller -> View
-                document.getElementById('view-layer').classList.add('active');
-                updatePayload(`Giao tiếp hoàn tất!`, "View chỉ nhận ResponseDTO từ Controller và in ra màn hình. View tuyệt đối không gọi thẳng Service hay Repo.");
-                
-                const consoleOut = document.getElementById('console-output');
-                consoleOut.classList.replace('text-green-400', 'text-white');
-                consoleOut.innerHTML = `> [GIAO DIỆN HỆ THỐNG]<br>> Thêm sinh viên thành công!<br>> Dữ liệu từ ResponseDTO: [ID: ${newId}] Tên: ${nameInput}`;
-                
-                await delay(1500);
-                document.getElementById('view-layer').classList.remove('active');
-
-            } finally {
-                // Cleanup arrows
-                document.querySelectorAll('.arrow-down, .arrow-up').forEach(el => el.classList.remove('active'));
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                document.getElementById('studentName').value = ''; // Clear input for next run
+        // Hiển thị bước tương ứng trong state machine
+        function showStep(stepIndex) {
+            resetUIForStep();
+            currentStep = stepIndex;
+            
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            // Cập nhật trạng thái nút bấm
+            prevBtn.disabled = (stepIndex === 1);
+            if (prevBtn.disabled) {
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
+            
+            nextBtn.innerText = (stepIndex === 7) ? "Hoàn thành" : "Sau";
+            
+            // Cập nhật code snippet của bước hiện tại
+            document.getElementById('current-step-num').innerText = stepIndex;
+            document.getElementById('current-step-layer').innerText = javaSnippets[stepIndex].file;
+            document.getElementById('current-step-code').innerText = javaSnippets[stepIndex].code;
+
+            // Cập nhật R6 explanation panel
+            updateR6Panel(stepIndex, nameInputVal);
+
+            // Cập nhật độ mờ (opacity) progressive cho các lớp và mũi tên
+            setOpacity('main-layer', true);
+            setOpacity('controller-layer', stepIndex >= 2);
+            setOpacity('arrow-c-s-down', stepIndex >= 3);
+            setOpacity('service-layer', stepIndex >= 3);
+            setOpacity('arrow-s-r-down', stepIndex >= 4);
+            setOpacity('repo-layer', stepIndex >= 4);
+            setOpacity('arrow-r-m-down', stepIndex >= 5);
+            setOpacity('model-layer', stepIndex >= 5);
+            setOpacity('arrow-r-s-up', stepIndex >= 6);
+            setOpacity('arrow-s-c-up', stepIndex >= 6);
+            setOpacity('view-layer', stepIndex >= 7);
+
+            // Cập nhật visual tracker cho tập tin tương tác
+            const fileTrackingMap = {
+                1: "Main.java ➔ StudentRequestDTO.java",
+                2: "StudentRequestDTO.java ➔ StudentController.java",
+                3: "StudentController.java ➔ StudentService.java",
+                4: "StudentService.java ➔ StudentRepository.java",
+                5: "StudentRepository.java ➔ Student.java",
+                6: "Student.java ➔ StudentService.java ➔ StudentResponseDTO.java ➔ StudentController.java",
+                7: "StudentController.java ➔ StudentView.java"
+            };
+            const fileTrack = document.getElementById('file-tracking-display');
+            if (fileTrack) {
+                fileTrack.innerText = fileTrackingMap[stepIndex];
+            }
+            
+            switch(stepIndex) {
+                case 1:
+                    document.getElementById('main-layer').classList.add('active');
+                    updatePayload(`StudentRequestDTO {\n  name: "${nameInputVal}"\n}`, "Tầng Main đóng gói dữ liệu nhập từ bàn phím thành RequestDTO.");
+                    break;
+                case 2:
+                    document.getElementById('controller-layer').classList.add('active');
+                    document.getElementById('controller-status').innerHTML = `<span class="text-blue-600 font-semibold">Đã nhận RequestDTO từ Main</span>`;
+                    updatePayload(`StudentRequestDTO {\n  name: "${nameInputVal}"\n}`, "Controller nhận RequestDTO. Sắp tới sẽ truyền nó cho Service.");
+                    break;
+                case 3:
+                    document.getElementById('arrow-c-s-down').classList.add('active');
+                    document.getElementById('service-layer').classList.add('active');
+                    document.getElementById('service-status').innerHTML = `<span class="text-yellow-600 font-semibold">Validate RequestDTO: Hợp lệ!</span>`;
+                    updatePayload(`StudentRequestDTO {\n  name: "${nameInputVal}"\n}`, "Service nhận RequestDTO để kiểm tra logic (Tên không rỗng, v.v.).");
+                    break;
+                case 4:
+                    document.getElementById('arrow-s-r-down').classList.add('active');
+                    document.getElementById('repo-layer').classList.add('active');
+                    document.getElementById('repo-status').innerHTML = `<span class="text-green-600 font-semibold">Nhận RequestDTO, chuẩn bị CREATE...</span>`;
+                    updatePayload(`StudentRequestDTO {\n  name: "${nameInputVal}"\n}`, "Repository nhận RequestDTO, chuẩn bị map dữ liệu sang Model.");
+                    break;
+                case 5:
+                    document.getElementById('arrow-r-m-down').classList.add('active');
+                    document.getElementById('model-layer').classList.add('active');
+                    
+                    const newId = db.length + 1;
+                    const currentDate = new Date().toISOString().split('T')[0];
+                    updatePayload(`StudentEntity {\n  id: ${newId},\n  name: "${nameInputVal}",\n  createdAt: "${currentDate}"\n}`, "Repository trích xuất dữ liệu từ RequestDTO và map thành Model/Entity chuẩn để lưu vào Database.");
+                    
+                    // Thêm sinh viên vào DB giả lập (chỉ thêm 1 lần duy nhất trong luồng đi lên)
+                    if (!tempStudent) {
+                        tempStudent = `{ id: ${newId}, name: "${nameInputVal}" }`;
+                        db.push(tempStudent);
+                        document.getElementById('database-content').innerText = db.join('\n');
+                    }
+                    break;
+                case 6:
+                    document.getElementById('repo-layer').classList.add('active');
+                    document.getElementById('arrow-r-s-up').classList.add('active');
+                    document.getElementById('service-layer').classList.add('active');
+                    document.getElementById('arrow-s-c-up').classList.add('active');
+                    document.getElementById('controller-layer').classList.add('active');
+                    
+                    document.getElementById('repo-status').innerHTML = `<span class="text-green-600 font-semibold">Lưu thành công. Trả kết quả lên.</span>`;
+                    document.getElementById('service-status').innerHTML = `<span class="text-yellow-600 font-semibold">Nghiệp vụ hoàn tất. Báo Controller.</span>`;
+                    document.getElementById('controller-status').innerHTML = `<span class="text-blue-600 font-semibold">Tạo ResponseDTO để gọi View</span>`;
+                    
+                    const responseId = db.length;
+                    updatePayload(`StudentResponseDTO {\n  id: ${responseId},\n  message: "Thành công!",\n  displayString: "[ID: ${responseId}] ${nameInputVal}"\n}`, "Controller đóng gói kết quả vào ResponseDTO.");
+                    break;
+                case 7:
+                    document.getElementById('view-layer').classList.add('active');
+                    updatePayload(`Giao tiếp hoàn tất!`, "View chỉ nhận ResponseDTO từ Controller và in ra màn hình.");
+                    
+                    const viewId = db.length;
+                    const consoleOut = document.getElementById('console-output');
+                    consoleOut.classList.replace('text-green-400', 'text-white');
+                    consoleOut.innerHTML = `> [GIAO DIỆN HỆ THỐNG]<br>> Thêm sinh viên thành công!<br>> Dữ liệu từ ResponseDTO: [ID: ${viewId}] Tên: ${escapeHTML(nameInputVal)}`;
+                    break;
+            }
+        }
+
+        // Chuyển sang bước tiếp theo
+        function nextStep() {
+            if (currentStep === 7) {
+                completeSimulation();
+            } else {
+                showStep(currentStep + 1);
+            }
+        }
+
+        // Quay lại bước trước đó
+        function prevStep() {
+            if (currentStep > 1) {
+                // Rollback database additions if stepping backward from Step 5 to Step 4
+                if (currentStep === 5 && tempStudent) {
+                    db.pop();
+                    tempStudent = null;
+                    document.getElementById('database-content').innerText = db.length > 0 ? db.join('\n') : '[ Database trống ]';
+                }
+                showStep(currentStep - 1);
+            }
+        }
+
+        // Hoàn thành mô phỏng, commit thay đổi và reset UI
+        function completeSimulation() {
+            tempStudent = null; 
+            currentStep = 0;
+            
+            // Ẩn bảng điều khiển
+            document.getElementById('simulation-controls').classList.add('hidden');
+            document.getElementById('contextual-code-panel').classList.add('hidden');
+            
+            // Ẩn và xóa R6 explanation panel
+            const r6Panel = document.getElementById('r6-explanation-panel');
+            if (r6Panel) {
+                r6Panel.classList.add('hidden');
+            }
+            document.getElementById('r6-active-file').innerText = '';
+            document.getElementById('r6-class-purpose').innerText = '';
+            document.getElementById('r6-class-input').innerText = '';
+            document.getElementById('r6-class-output').innerText = '';
+            
+            // Mở khóa input và nút bắt đầu
+            const nameInput = document.getElementById('studentName');
+            nameInput.disabled = false;
+            nameInput.value = '';
+            
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = false;
+            startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            // Tắt live indicator
+            const indicator = document.getElementById('live-indicator');
+            indicator.classList.remove('bg-green-500', 'animate-pulse');
+            indicator.classList.add('bg-gray-500');
+            
+            resetUI();
         }
     </script>
 </body>

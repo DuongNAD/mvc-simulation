@@ -1,0 +1,2 @@
+## 2026-06-21T12:01:28Z
+You are the Forensic Integrity Auditor. Perform an integrity audit on the R6 bug fixes. Verify that the explanation panel dynamically renders the correct purpose, dynamic input payload, and dynamic output values without any hardcoded cheats, dummies, or bypasses. Execute tests and check code integrity. Write your verdict (CLEAN or VIOLATION) and audit evidence report to e:\test\mvc-simulation\.agents\auditor_r6_retry\handoff.md and notify me.
